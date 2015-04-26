@@ -9,13 +9,14 @@
     </head>
     <body>
         <div class="instructions">Resize the page to see the Tether flip.</div>
-
-        <div class="element"></div>
+        <div>
+            <div class="element" style="background-color: blue"></div>
+        </div>
         <div class="target"></div>
 
         <script src="../../tether.js"></script>
         <script>
-            new Tether({
+            window.tether = new Tether({
                 element: '.element',
                 target: '.target',
                 attachment: 'top left',
@@ -23,7 +24,12 @@
                 constraints: [{
                     to: 'window',
                     attachment: 'together'
-                }]
+                }],
+                restore: {
+                    classes: true,
+                    domPos: true,
+                    styles: true
+                }
             });
         </script>
     </body>

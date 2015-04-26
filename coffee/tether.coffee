@@ -145,6 +145,41 @@ class _Tether
     else
       ''
 
+  saveOriginal: ->
+    @originalData =
+      element:
+        attributes:
+          classes: null
+          styles: null
+        parent: null
+        previous: null
+      target:
+        attributes:
+          classes: null
+          styles: null
+
+    if @options.restore.classes
+      @originalData.element.attributes.classes = @element.className
+      @originalData.target.attributes.classes = @target.className
+    if @options.restore.styles
+      @originalData.element.attributes.styles = if @element.attributes.style then @element.attributes.style.value else null
+      @originalData.target.attributes.styles = if @target.attributes.style then @target.attributes.style.value else null
+    if @options.restore.domPos
+      @originalData.element.parent = @element.parentElement
+      @originalData.target.parent = @target.parentElement
+      @originalData.element.previous = @element.previousElementSibling
+      @originalData.target.previous = @target.previousElementSibling
+
+  restoreOriginal: ->
+    for elemObj in [{elem: @element, data: @originalData.element}, {elem: @target, data: @originalData.target}]
+      if elemObj.elem.attributes
+        if elemObj.data.attributes.classes
+          elemObj.elem.className = elemObj.data.attributes.classes
+        if elemObj.data.attributes.styles
+          elemObj.elem.setAttribute 'style', elemObj.data.attributes.styles
+      if elemObj.data.parent
+        elemObj.data.parent.insertBefore elemObj.elem, elemObj.data.previous && elemObj.data.previous.nextSibling;
+
   setOptions: (@options, position=true) ->
     defaults =
       offset: '0 0'
@@ -171,6 +206,9 @@ class _Tether
         @[key] = @[key][0]
       else if typeof @[key] is 'string'
         @[key] = document.querySelector @[key]
+
+    if @options.restore
+      @saveOriginal()
 
     addClass @element, @getClass 'element'
     addClass @target, @getClass 'target'
@@ -305,6 +343,9 @@ class _Tether
 
   destroy: ->
     @disable()
+
+    if @options.restore
+      @restoreOriginal()
 
     for tether, i in tethers
       if tether is @
