@@ -554,6 +554,70 @@
       }
     };
 
+    _Tether.prototype.saveOriginal = function() {
+      this.originalData = {
+        element: {
+          attributes: {
+            classes: null,
+            styles: null
+          },
+          parent: null,
+          previous: null
+        },
+        target: {
+          attributes: {
+            classes: null,
+            styles: null
+          }
+        }
+      };
+      if (this.options.restore.classes) {
+        this.originalData.element.attributes.classes = this.element.className;
+        this.originalData.target.attributes.classes = this.target.className;
+      }
+      if (this.options.restore.styles) {
+        this.originalData.element.attributes.styles = this.element.attributes.style ? this.element.attributes.style.value : null;
+        this.originalData.target.attributes.styles = this.target.attributes.style ? this.target.attributes.style.value : null;
+      }
+      if (this.options.restore.domPos) {
+        this.originalData.element.parent = this.element.parentElement;
+        this.originalData.target.parent = this.target.parentElement;
+        this.originalData.element.previous = this.element.previousElementSibling;
+        return this.originalData.target.previous = this.target.previousElementSibling;
+      }
+    };
+
+    _Tether.prototype.restoreOriginal = function() {
+      var elemObj, _i, _len, _ref1, _results;
+      _ref1 = [
+        {
+          elem: this.element,
+          data: this.originalData.element
+        }, {
+          elem: this.target,
+          data: this.originalData.target
+        }
+      ];
+      _results = [];
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        elemObj = _ref1[_i];
+        if (elemObj.elem.attributes) {
+          if (elemObj.data.attributes.classes) {
+            elemObj.elem.className = elemObj.data.attributes.classes;
+          }
+          if (elemObj.data.attributes.styles) {
+            elemObj.elem.setAttribute('style', elemObj.data.attributes.styles);
+          }
+        }
+        if (elemObj.data.parent) {
+          _results.push(elemObj.data.parent.insertBefore(elemObj.elem, elemObj.data.previous && elemObj.data.previous.nextSibling));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
     _Tether.prototype.setOptions = function(options, position) {
       var defaults, key, _i, _len, _ref1, _ref2;
       this.options = options;
@@ -586,6 +650,9 @@
         } else if (typeof this[key] === 'string') {
           this[key] = document.querySelector(this[key]);
         }
+      }
+      if (this.options.restore) {
+        this.saveOriginal();
       }
       addClass(this.element, this.getClass('element'));
       addClass(this.target, this.getClass('target'));
@@ -731,6 +798,9 @@
     _Tether.prototype.destroy = function() {
       var i, tether, _i, _len, _results;
       this.disable();
+      if (this.options.restore) {
+        this.restoreOriginal();
+      }
       _results = [];
       for (i = _i = 0, _len = tethers.length; _i < _len; i = ++_i) {
         tether = tethers[i];
